@@ -6,6 +6,7 @@ import (
 	"errors"
 	staking "go-solidity-staking/gen"
 	"go-solidity-staking/models"
+	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -46,6 +47,11 @@ func (l *listenerService) ReplayFromLast(ctx context.Context, contractAddress co
 		return err
 	}
 	latest := latestHeader.Number.Uint64()
+	// 只回放到最新已确认的区块
+	// 避免刚出块就被回滚导致数据错
+	if confirmations > 1 && latest >= confirmations-1 {
+		latest = confirmations - 1
+	}
 	// 区块已同步
 	if lastBlock > latest {
 		return nil
@@ -55,7 +61,18 @@ func (l *listenerService) ReplayFromLast(ctx context.Context, contractAddress co
 }
 
 func (l *listenerService) StartReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration) {
-
+	timer := time.NewTimer(interval)
+	defer timer.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			if err := l.ReplayFromLast(ctx, contractAddress, starkBlock, confirmations); err != nil {
+				log.Printf("start replay loop:%v", err)
+			}
+		}
+	}
 }
 
 func (l *listenerService) replayRange(ctx context.Context, contractAddress common.Address, start uint64, end uint64) error {
