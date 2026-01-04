@@ -553,7 +553,7 @@ interface IERC20 {
 
 // File: contracts/Staking.sol
 
-pragma solidity ^0.8.25;
+pragma solidity ^0.8.0;
 
 contract Staking is ReentrancyGuard, Ownable {
     using SafeMath for uint256;
