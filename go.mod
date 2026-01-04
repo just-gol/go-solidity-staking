@@ -2,7 +2,10 @@ module go-solidity-staking
 
 go 1.25.3
 
-require github.com/ethereum/go-ethereum v1.16.7
+require (
+	github.com/ethereum/go-ethereum v1.16.7
+	gopkg.in/ini.v1 v1.67.0
+)
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
