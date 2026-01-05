@@ -13,7 +13,7 @@ import (
 )
 
 type StakingService interface {
-	stake(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount uint64) (*types.Transaction, error)
+	Stake(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount uint64) (*types.Transaction, error)
 }
 
 type stakingService struct {
@@ -23,7 +23,7 @@ type stakingService struct {
 func NewStakingService(client *ethclient.Client) StakingService {
 	return &stakingService{client: client}
 }
-func (s *stakingService) stake(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount uint64) (*types.Transaction, error) {
+func (s *stakingService) Stake(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount uint64) (*types.Transaction, error) {
 	client := s.client
 	newStaking, err := staking.NewStaking(contractAddress, client)
 	if err != nil {
