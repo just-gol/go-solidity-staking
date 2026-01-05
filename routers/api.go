@@ -7,7 +7,7 @@ import (
 )
 
 func ApiRoutersInit(r *gin.Engine, handle *handle.StakingHandle) {
-	group := r.Group("/staking")
+	group := r.Group("/api")
 	{
 		group.POST("/stake", handle.Stake)
 	}

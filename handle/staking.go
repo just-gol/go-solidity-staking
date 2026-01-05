@@ -32,10 +32,11 @@ func (s *StakingHandle) Stake(ctx *gin.Context) {
 		models.Error(ctx, "Error parsing amount")
 		return
 	}
-	amount := new(big.Int).Mul(
-		big.NewInt(parseInt),
-		big.NewInt(1e18),
-	)
+	//amount := new(big.Int).Mul(
+	//	big.NewInt(parseInt),
+	//	big.NewInt(1e18),
+	//)
+	amount := new(big.Int).SetInt64(parseInt)
 	stake, err := s.svc.Stake(ctx.Request.Context(), contractAddress, privateKey, amount)
 	if err != nil {
 		models.Error(ctx, "Error staking")

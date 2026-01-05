@@ -17,7 +17,7 @@ var err error
 func init() {
 	path := os.Getenv("APP_CONFIG_PATH")
 	if path == "" {
-		path = "./config/app.ini"
+		path = "./config/staking.ini"
 	}
 	cfg, err := ini.Load(path)
 	if err != nil {

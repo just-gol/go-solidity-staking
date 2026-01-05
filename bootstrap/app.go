@@ -16,7 +16,7 @@ import (
 )
 
 func NewApp() (*gin.Engine, error) {
-	config, err := ini.Load("../config.ini")
+	config, err := ini.Load("./config/staking.ini")
 	if err != nil {
 		return nil, err
 	}
