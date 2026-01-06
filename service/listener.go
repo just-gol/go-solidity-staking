@@ -53,7 +53,7 @@ func (l *listenerService) ReplayFromLast(ctx context.Context, contractAddress co
 	// 只回放到最新已确认的区块
 	// 避免刚出块就被回滚导致数据错
 	if confirmations > 1 && latest >= confirmations-1 {
-		latest = confirmations - 1
+		latest = latest - (confirmations - 1)
 	}
 	// 区块已同步
 	if lastBlock > latest {
@@ -64,13 +64,13 @@ func (l *listenerService) ReplayFromLast(ctx context.Context, contractAddress co
 }
 
 func (l *listenerService) StartReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration) {
-	timer := time.NewTimer(interval)
-	defer timer.Stop()
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-timer.C:
+		case <-ticker.C:
 			if err := l.ReplayFromLast(ctx, contractAddress, starkBlock, confirmations); err != nil {
 				log.Printf("start replay loop:%v", err)
 			}
@@ -121,7 +121,7 @@ func (l *listenerService) ReplayERC20FromLast(ctx context.Context, contractAddre
 	}
 	latest := latestHeader.Number.Uint64()
 	if confirmations > 1 && latest >= confirmations-1 {
-		latest = confirmations - 1
+		latest = latest - (confirmations - 1)
 	}
 	if lastBlock > latest {
 		return nil
@@ -130,13 +130,13 @@ func (l *listenerService) ReplayERC20FromLast(ctx context.Context, contractAddre
 }
 
 func (l *listenerService) StartERC20ReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration) {
-	timer := time.NewTimer(interval)
-	defer timer.Stop()
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-timer.C:
+		case <-ticker.C:
 			if err := l.ReplayERC20FromLast(ctx, contractAddress, starkBlock, confirmations); err != nil {
 				log.Printf("start erc20 transfer replay loop:%v", err)
 			}
