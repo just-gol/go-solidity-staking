@@ -11,5 +11,6 @@ func ApiRoutersInit(r *gin.Engine, handle *handle.StakingHandle, tokenHandle *ha
 	{
 		group.POST("/stake", handle.Stake)
 		group.POST("/approve", tokenHandle.Approve)
+		group.POST("/transfer", tokenHandle.Transfer)
 	}
 }

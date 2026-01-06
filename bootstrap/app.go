@@ -72,7 +72,7 @@ func NewApp() (*gin.Engine, error) {
 func funcERC20(addressStr string, tokenAddress common.Address, listenerService service.ListenerService, config *ini.File) {
 	if addressStr != "" && tokenAddress != (common.Address{}) {
 		go func() {
-			if err := listenerService.ReplayERC20TransfersFromLast(
+			if err := listenerService.ReplayERC20FromLast(
 				context.Background(),
 				tokenAddress,
 				config.Section("eth").Key("start_block").MustUint64(0),
@@ -81,7 +81,7 @@ func funcERC20(addressStr string, tokenAddress common.Address, listenerService s
 				log.Printf("Error replaying erc20 from last: %v", err)
 				return
 			}
-			listenerService.StartERC20TransferReplayLoop(
+			listenerService.StartERC20ReplayLoop(
 				context.Background(),
 				tokenAddress,
 				config.Section("eth").Key("start_block").MustUint64(0),

@@ -10,7 +10,6 @@ type EventLog struct {
 	Event       string
 	Contract    string
 	EventArgs   string
-	Data        string
 	CreatedAt   time.Time
 }
 

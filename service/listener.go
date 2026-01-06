@@ -22,8 +22,8 @@ import (
 type ListenerService interface {
 	ReplayFromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error
 	StartReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration)
-	ReplayERC20TransfersFromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error
-	StartERC20TransferReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration)
+	ReplayERC20FromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error
+	StartERC20ReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration)
 }
 
 type listenerService struct {
@@ -106,7 +106,7 @@ func (l *listenerService) handleStaked(ev *staking.StakingStaked) {
 	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
-func (l *listenerService) ReplayERC20TransfersFromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error {
+func (l *listenerService) ReplayERC20FromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error {
 	key := syncKey("erc20_transfer", contractAddress)
 	lastBlock, err := l.getSyncBlock(key)
 	if err != nil {
@@ -126,10 +126,10 @@ func (l *listenerService) ReplayERC20TransfersFromLast(ctx context.Context, cont
 	if lastBlock > latest {
 		return nil
 	}
-	return l.replayERC20TransferRange(ctx, contractAddress, lastBlock+1, latest)
+	return l.replayERC20Range(ctx, contractAddress, lastBlock+1, latest)
 }
 
-func (l *listenerService) StartERC20TransferReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration) {
+func (l *listenerService) StartERC20ReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration) {
 	timer := time.NewTimer(interval)
 	defer timer.Stop()
 	for {
@@ -137,14 +137,14 @@ func (l *listenerService) StartERC20TransferReplayLoop(ctx context.Context, cont
 		case <-ctx.Done():
 			return
 		case <-timer.C:
-			if err := l.ReplayERC20TransfersFromLast(ctx, contractAddress, starkBlock, confirmations); err != nil {
+			if err := l.ReplayERC20FromLast(ctx, contractAddress, starkBlock, confirmations); err != nil {
 				log.Printf("start erc20 transfer replay loop:%v", err)
 			}
 		}
 	}
 }
 
-func (l *listenerService) replayERC20TransferRange(ctx context.Context, contractAddress common.Address, start uint64, end uint64) error {
+func (l *listenerService) replayERC20Range(ctx context.Context, contractAddress common.Address, start uint64, end uint64) error {
 	token, err := erc20.NewErc20(contractAddress, l.client)
 	if err != nil {
 		return err
@@ -157,6 +157,14 @@ func (l *listenerService) replayERC20TransferRange(ctx context.Context, contract
 	defer transferIter.Close()
 	for transferIter.Next() {
 		l.handleErc20Transfer(transferIter.Event)
+	}
+	approvalIter, err := token.FilterApproval(&bind.FilterOpts{Start: start, End: &endCopy, Context: ctx}, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer approvalIter.Close()
+	for approvalIter.Next() {
+		l.handleErc20Approval(approvalIter.Event)
 	}
 	return l.setSyncBlock(syncKey("erc20_transfer", contractAddress), end)
 }
@@ -201,6 +209,48 @@ func (l *listenerService) recordErc20Transfer(ev *erc20.Erc20Transfer) (bool, er
 	}
 	return result.RowsAffected > 0, nil
 }
+
+func (l *listenerService) handleErc20Approval(ev *erc20.Erc20Approval) {
+	if ev == nil {
+		return
+	}
+	ok, err := l.recordErc20Approval(ev)
+	if err != nil || !ok {
+		return
+	}
+	_ = l.setSyncBlock(syncKey("erc20_transfer", ev.Raw.Address), ev.Raw.BlockNumber)
+}
+
+func (l *listenerService) recordErc20Approval(ev *erc20.Erc20Approval) (bool, error) {
+	signature := ""
+	if len(ev.Raw.Topics) > 0 {
+		signature = ev.Raw.Topics[0].Hex()
+	}
+	indexedMap := map[string]string{
+		"signature": signature,
+		"owner":     ev.Owner.Hex(),
+		"spender":   ev.Spender.Hex(),
+		"value":     ev.Value.String(),
+	}
+	marshal, err := json.Marshal(indexedMap)
+	if err != nil {
+		return false, err
+	}
+	entry := models.EventLog{
+		TxHash:      ev.Raw.TxHash.Hex(),
+		LogIndex:    ev.Raw.Index,
+		BlockNumber: ev.Raw.BlockNumber,
+		Event:       "erc20_transfer",
+		EventArgs:   string(marshal),
+		Contract:    ev.Raw.Address.Hex(),
+	}
+	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
 func (l *listenerService) recordEvent(logEntry types.Log, eventName string) (bool, error) {
 	if len(logEntry.Topics) < 3 {
 		return false, nil

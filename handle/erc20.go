@@ -42,3 +42,34 @@ func (e *ERC20TokenHandle) Approve(ctx *gin.Context) {
 	}
 	models.Success(ctx, approve.Hash().Hex())
 }
+
+// Transfer
+// contractAddress = ERC20 合约地址
+// to = 用户地址
+// privateKeyStr = 持币者（部署者）私钥
+// value = 乘 1e18 后的数量
+// /*
+func (e *ERC20TokenHandle) Transfer(ctx *gin.Context) {
+	privateKey, err := parsePrivateKey(ctx.PostForm("privateKeyStr"))
+	if err != nil {
+		models.Error(ctx, "Error parsing private key")
+		return
+	}
+	contractAddress := common.HexToAddress(ctx.PostForm("contractAddress"))
+	to := common.HexToAddress(ctx.PostForm("to"))
+	parseInt, err := strconv.ParseInt(ctx.PostForm("value"), 10, 64)
+	if err != nil {
+		models.Error(ctx, "Error parsing amount")
+		return
+	}
+	value := new(big.Int).Mul(
+		big.NewInt(parseInt),
+		big.NewInt(1e18),
+	)
+	approve, err := e.svc.Transfer(ctx.Request.Context(), contractAddress, to, privateKey, value)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, approve.Hash().Hex())
+}

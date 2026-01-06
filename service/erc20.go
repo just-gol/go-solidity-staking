@@ -14,6 +14,7 @@ import (
 
 type ERC20TokenService interface {
 	Approve(ctx context.Context, contractAddress common.Address, spenderAddress common.Address, privateKey *ecdsa.PrivateKey, value *big.Int) (*types.Transaction, error)
+	Transfer(ctx context.Context, contractAddress common.Address, to common.Address, privateKey *ecdsa.PrivateKey, value *big.Int) (*types.Transaction, error)
 }
 
 type erc20TokenService struct {
@@ -39,4 +40,20 @@ func (e *erc20TokenService) Approve(ctx context.Context, contractAddress common.
 		return nil, err
 	}
 	return newErc20.Approve(auth, spenderAddress, value)
+}
+func (e *erc20TokenService) Transfer(ctx context.Context, contractAddress common.Address, to common.Address, privateKey *ecdsa.PrivateKey, value *big.Int) (*types.Transaction, error) {
+	client := e.client
+	newErc20, err := erc20.NewErc20(contractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
+	if err != nil {
+		return nil, err
+	}
+	return newErc20.Transfer(auth, to, value)
 }
