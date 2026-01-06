@@ -468,8 +468,8 @@ import "./ierc20.sol";
 contract Staking is ReentrancyGuard, Ownable {
     using SafeMath for uint256;
 
-    ierc20 public s_stakingToken;
-    ierc20 public s_rewardToken;
+    IERC20 public s_stakingToken;
+    IERC20 public s_rewardToken;
 
     // state variables
     uint256 public rewardRate = uint256(1e18) / (60 * 60 * 60 * 60);
