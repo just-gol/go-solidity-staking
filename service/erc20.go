@@ -20,7 +20,7 @@ type erc20TokenService struct {
 	client *ethclient.Client
 }
 
-func NewERC20Token(client *ethclient.Client) ERC20TokenService {
+func NewERC20TokenService(client *ethclient.Client) ERC20TokenService {
 	return &erc20TokenService{client: client}
 }
 

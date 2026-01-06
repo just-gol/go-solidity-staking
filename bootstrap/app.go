@@ -32,8 +32,14 @@ func NewApp() (*gin.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 质押
 	stakingService := service.NewStakingService(rpcClient)
 	stakingHandle := handle.NewStakingHandle(stakingService)
+
+	//ERC20
+	tokenService := service.NewERC20TokenService(rpcClient)
+	tokenHandle := handle.NewERC20Handler(tokenService)
+
 	go func() {
 		// 调用区块链回放
 		if err := listenerService.ReplayFromLast(
@@ -75,6 +81,6 @@ func NewApp() (*gin.Engine, error) {
 	}
 	r := gin.Default()
 	r.Use(cors.Default())
-	routers.ApiRoutersInit(r, stakingHandle)
+	routers.ApiRoutersInit(r, stakingHandle, tokenHandle)
 	return r, nil
 }
