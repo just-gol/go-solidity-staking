@@ -23,7 +23,8 @@ func main() {
 	if err != nil {
 		log.Fatalf(" ethclient.Dial error:%v", err)
 	}
-	privateKeyStr := config.Section("eth").Key("private_key").String()
+	//privateKeyStr := config.Section("eth").Key("staking_private_key").String()
+	privateKeyStr := config.Section("eth").Key("reward_private_key").String()
 	privateKey, err := crypto.HexToECDSA(privateKeyStr[2:])
 	if err != nil {
 		log.Fatalf("parses a secp256k1 private key error:%v", err)

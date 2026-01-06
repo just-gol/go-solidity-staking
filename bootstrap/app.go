@@ -26,8 +26,10 @@ func NewApp() (*gin.Engine, error) {
 	}
 	listenerService := service.NewListenerService(wsClient)
 	contractAddress := common.HexToAddress(config.Section("eth").Key("contract_address").String())
-	erc20AddressStr := config.Section("eth").Key("erc20_contract_address").String()
-	erc20Address := common.HexToAddress(erc20AddressStr)
+	stakingTokenAddressStr := config.Section("eth").Key("staking_token").String()
+	stakingTokenAddress := common.HexToAddress(stakingTokenAddressStr)
+	rewardTokenAddressStr := config.Section("eth").Key("reward_token").String()
+	rewardTokenAddress := common.HexToAddress(rewardTokenAddressStr)
 	rpcClient, err := ethclient.Dial(config.Section("url").Key("rpc_url").String())
 	if err != nil {
 		return nil, err
@@ -59,11 +61,20 @@ func NewApp() (*gin.Engine, error) {
 			time.Duration(config.Section("eth").Key("interval").MustUint64(1))*time.Second,
 		)
 	}()
-	if erc20AddressStr != "" && erc20Address != (common.Address{}) {
+	funcERC20(stakingTokenAddressStr, stakingTokenAddress, listenerService, config)
+	funcERC20(rewardTokenAddressStr, rewardTokenAddress, listenerService, config)
+	r := gin.Default()
+	r.Use(cors.Default())
+	routers.ApiRoutersInit(r, stakingHandle, tokenHandle)
+	return r, nil
+}
+
+func funcERC20(addressStr string, tokenAddress common.Address, listenerService service.ListenerService, config *ini.File) {
+	if addressStr != "" && tokenAddress != (common.Address{}) {
 		go func() {
 			if err := listenerService.ReplayERC20TransfersFromLast(
 				context.Background(),
-				erc20Address,
+				tokenAddress,
 				config.Section("eth").Key("start_block").MustUint64(0),
 				config.Section("eth").Key("confirmations").MustUint64(1),
 			); err != nil {
@@ -72,15 +83,11 @@ func NewApp() (*gin.Engine, error) {
 			}
 			listenerService.StartERC20TransferReplayLoop(
 				context.Background(),
-				erc20Address,
+				tokenAddress,
 				config.Section("eth").Key("start_block").MustUint64(0),
 				config.Section("eth").Key("confirmations").MustUint64(1),
 				time.Duration(config.Section("eth").Key("interval").MustUint64(1))*time.Second,
 			)
 		}()
 	}
-	r := gin.Default()
-	r.Use(cors.Default())
-	routers.ApiRoutersInit(r, stakingHandle, tokenHandle)
-	return r, nil
 }

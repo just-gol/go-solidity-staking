@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"gopkg.in/ini.v1"
@@ -36,7 +37,9 @@ func main() {
 		log.Fatalf("NewKeyedTransactorWithChainID error:%v", err)
 	}
 	publicKey := crypto.PubkeyToAddress(privateKey.PublicKey)
-	deployStaking, transaction, _, err := staking.DeployStaking(auth, client, publicKey, publicKey, publicKey)
+	stakingToken := common.HexToAddress(config.Section("eth").Key("staking_token").String())
+	rewardToken := common.HexToAddress(config.Section("eth").Key("reward_token").String())
+	deployStaking, transaction, _, err := staking.DeployStaking(auth, client, stakingToken, rewardToken, publicKey)
 	if err != nil {
 		log.Fatalf("deploy error:%v", err)
 	}
