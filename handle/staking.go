@@ -39,7 +39,7 @@ func (s *StakingHandle) Stake(ctx *gin.Context) {
 	amount := new(big.Int).SetInt64(parseInt)
 	stake, err := s.svc.Stake(ctx.Request.Context(), contractAddress, privateKey, amount)
 	if err != nil {
-		models.Error(ctx, "Error staking")
+		models.Error(ctx, err.Error())
 		return
 	}
 	models.Success(ctx, stake.Hash().Hex())

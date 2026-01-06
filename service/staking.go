@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"crypto/ecdsa"
-	staking "go-solidity-staking/gen"
+	"go-solidity-staking/gen/staking"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

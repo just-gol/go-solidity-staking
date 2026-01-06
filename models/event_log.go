@@ -9,7 +9,7 @@ type EventLog struct {
 	BlockNumber uint64
 	Event       string
 	Contract    string
-	Indexed     string
+	EventArgs   string
 	Data        string
 	CreatedAt   time.Time
 }
