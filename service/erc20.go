@@ -15,6 +15,8 @@ import (
 type ERC20TokenService interface {
 	Approve(ctx context.Context, contractAddress common.Address, spenderAddress common.Address, privateKey *ecdsa.PrivateKey, value *big.Int) (*types.Transaction, error)
 	Transfer(ctx context.Context, contractAddress common.Address, to common.Address, privateKey *ecdsa.PrivateKey, value *big.Int) (*types.Transaction, error)
+	BalanceOf(ctx context.Context, contractAddress common.Address, to common.Address) (*big.Int, error)
+	Allowance(ctx context.Context, contractAddress common.Address, ownerAddress common.Address, spenderAddress common.Address) (*big.Int, error)
 }
 
 type erc20TokenService struct {
@@ -56,4 +58,21 @@ func (e *erc20TokenService) Transfer(ctx context.Context, contractAddress common
 		return nil, err
 	}
 	return newErc20.Transfer(auth, to, value)
+}
+func (e *erc20TokenService) BalanceOf(ctx context.Context, contractAddress common.Address, to common.Address) (*big.Int, error) {
+	client := e.client
+	newErc20, err := erc20.NewErc20(contractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+	return newErc20.BalanceOf(&bind.CallOpts{Context: ctx}, to)
+}
+
+func (e *erc20TokenService) Allowance(ctx context.Context, contractAddress common.Address, ownerAddress common.Address, spenderAddress common.Address) (*big.Int, error) {
+	client := e.client
+	newErc20, err := erc20.NewErc20(contractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+	return newErc20.Allowance(&bind.CallOpts{Context: ctx}, ownerAddress, spenderAddress)
 }
