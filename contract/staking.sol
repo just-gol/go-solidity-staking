@@ -7,7 +7,7 @@
 
 // OpenZeppelin Contracts (last updated v4.9.0) (utils/math/SafeMath.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 // CAUTION
 // This version of SafeMath should only be used with Solidity 0.8 or later,
@@ -251,7 +251,7 @@ library SafeMath {
 
 // OpenZeppelin Contracts (last updated v4.9.0) (security/ReentrancyGuard.sol)
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 /**
  * @dev Contract module that helps prevent reentrant calls to a function.
@@ -461,7 +461,7 @@ abstract contract Ownable is Context {
 
 // File: contracts/Staking.sol
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "./ierc20.sol";
 
@@ -496,8 +496,8 @@ contract Staking is ReentrancyGuard, Ownable {
         address initialOwner
     ) Ownable(initialOwner) {
         // Ensure 'initialOwner' is passed correctly during deployment
-        s_stakingToken = ierc20(stakingToken);
-        s_rewardToken = ierc20(rewardToken);
+        s_stakingToken = IERC20(stakingToken);
+        s_rewardToken = IERC20(rewardToken);
     }
 
     // modifiers

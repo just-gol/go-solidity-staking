@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	staking "go-solidity-staking/gen"
+	"go-solidity-staking/gen/staking"
 	"log"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

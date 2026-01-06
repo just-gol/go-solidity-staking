@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	staking "go-solidity-staking/gen"
+	"go-solidity-staking/gen/erc20"
 	"log"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -35,11 +36,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("NewKeyedTransactorWithChainID error:%v", err)
 	}
-	publicKey := crypto.PubkeyToAddress(privateKey.PublicKey)
-	deployStaking, transaction, _, err := staking.DeployStaking(auth, client, publicKey, publicKey, publicKey)
+	deployERC20, transaction, _, err := erc20.DeployErc20(auth, client, "DOG TOKEN", "DOG", new(big.Int).Mul(big.NewInt(1000), big.NewInt(1e18)))
 	if err != nil {
 		log.Fatalf("deploy error:%v", err)
 	}
-	fmt.Printf("Deploying staking contract successfully:%s\n", deployStaking.Hex())
+	fmt.Printf("Deploying ERC20 contract successfully:%s\n", deployERC20.Hex())
 	fmt.Printf("Transaction Hash: %s", transaction.Hash().Hex())
 }
