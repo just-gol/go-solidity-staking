@@ -463,13 +463,13 @@ abstract contract Ownable is Context {
 
 pragma solidity ^0.8.0;
 
-import "./IERC20.sol";
+import "./ierc20.sol";
 
 contract Staking is ReentrancyGuard, Ownable {
     using SafeMath for uint256;
 
-    IERC20 public s_stakingToken;
-    IERC20 public s_rewardToken;
+    ierc20 public s_stakingToken;
+    ierc20 public s_rewardToken;
 
     // state variables
     uint256 public rewardRate = uint256(1e18) / (60 * 60 * 60 * 60);
@@ -496,8 +496,8 @@ contract Staking is ReentrancyGuard, Ownable {
         address initialOwner
     ) Ownable(initialOwner) {
         // Ensure 'initialOwner' is passed correctly during deployment
-        s_stakingToken = IERC20(stakingToken);
-        s_rewardToken = IERC20(rewardToken);
+        s_stakingToken = ierc20(stakingToken);
+        s_rewardToken = ierc20(rewardToken);
     }
 
     // modifiers
