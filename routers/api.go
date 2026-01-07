@@ -12,5 +12,7 @@ func ApiRoutersInit(r *gin.Engine, handle *handle.StakingHandle, tokenHandle *ha
 		group.POST("/stake", handle.Stake)
 		group.POST("/approve", tokenHandle.Approve)
 		group.POST("/transfer", tokenHandle.Transfer)
+		group.POST("/balanceOf", tokenHandle.BalanceOf)
+		group.POST("/allowance", tokenHandle.Allowance)
 	}
 }
