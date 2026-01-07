@@ -84,13 +84,17 @@ func (l *listenerService) replayRange(ctx context.Context, contractAddress commo
 		return err
 	}
 	endCopy := end
-	stakedIter, err := s.FilterStaked(&bind.FilterOpts{Start: start, End: &endCopy, Context: ctx}, nil, nil)
-	if err != nil {
+	if err := l.consumeStakingStaked(s, ctx, start, &endCopy); err != nil {
 		return err
 	}
-	defer stakedIter.Close()
-	for stakedIter.Next() {
-		l.handleStaked(stakedIter.Event)
+	if err := l.consumeStakingWithdrawn(s, ctx, start, &endCopy); err != nil {
+		return err
+	}
+	if err := l.consumeStakingRewardsClaimed(s, ctx, start, &endCopy); err != nil {
+		return err
+	}
+	if err := l.consumeStakingRewardRateUpdated(s, ctx, start, &endCopy); err != nil {
+		return err
 	}
 	return l.setSyncBlock(syncKey("staking", contractAddress), end)
 }
@@ -103,6 +107,47 @@ func (l *listenerService) handleStaked(ev *staking.StakingStaked) {
 		return
 	}
 	// 更新区块高度
+	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
+}
+
+func (l *listenerService) handleWithdrawn(ev *staking.StakingWithdrawn) {
+	if ev == nil {
+		return
+	}
+	ok, err := l.recordEvent(ev.Raw, "withdrawn")
+	if err != nil || !ok {
+		return
+	}
+	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
+}
+
+func (l *listenerService) handleRewardsClaimed(ev *staking.StakingRewardsClaimed) {
+	if ev == nil {
+		return
+	}
+	ok, err := l.recordEvent(ev.Raw, "rewards_claimed")
+	if err != nil || !ok {
+		return
+	}
+	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
+}
+
+func (l *listenerService) handleRewardRateUpdated(ev *staking.StakingRewardRateUpdated) {
+	if ev == nil {
+		return
+	}
+	signature := ""
+	if len(ev.Raw.Topics) > 0 {
+		signature = ev.Raw.Topics[0].Hex()
+	}
+	indexedMap := map[string]string{
+		"signature":       signature,
+		"new_reward_rate": ev.NewRewardRate.String(),
+	}
+	ok, err := l.recordEventMap(ev.Raw, "reward_rate_updated", indexedMap)
+	if err != nil || !ok {
+		return
+	}
 	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
@@ -150,21 +195,11 @@ func (l *listenerService) replayERC20Range(ctx context.Context, contractAddress 
 		return err
 	}
 	endCopy := end
-	transferIter, err := token.FilterTransfer(&bind.FilterOpts{Start: start, End: &endCopy, Context: ctx}, nil, nil)
-	if err != nil {
+	if err := l.consumeErc20Transfer(token, ctx, start, &endCopy); err != nil {
 		return err
 	}
-	defer transferIter.Close()
-	for transferIter.Next() {
-		l.handleErc20Transfer(transferIter.Event)
-	}
-	approvalIter, err := token.FilterApproval(&bind.FilterOpts{Start: start, End: &endCopy, Context: ctx}, nil, nil)
-	if err != nil {
+	if err := l.consumeErc20Approval(token, ctx, start, &endCopy); err != nil {
 		return err
-	}
-	defer approvalIter.Close()
-	for approvalIter.Next() {
-		l.handleErc20Approval(approvalIter.Event)
 	}
 	return l.setSyncBlock(syncKey("erc20_transfer", contractAddress), end)
 }
@@ -181,33 +216,12 @@ func (l *listenerService) handleErc20Transfer(ev *erc20.Erc20Transfer) {
 }
 
 func (l *listenerService) recordErc20Transfer(ev *erc20.Erc20Transfer) (bool, error) {
-	signature := ""
-	if len(ev.Raw.Topics) > 0 {
-		signature = ev.Raw.Topics[0].Hex()
-	}
 	indexedMap := map[string]string{
-		"signature": signature,
-		"from":      ev.From.Hex(),
-		"to":        ev.To.Hex(),
-		"value":     ev.Value.String(),
+		"from":  ev.From.Hex(),
+		"to":    ev.To.Hex(),
+		"value": ev.Value.String(),
 	}
-	marshal, err := json.Marshal(indexedMap)
-	if err != nil {
-		return false, err
-	}
-	entry := models.EventLog{
-		TxHash:      ev.Raw.TxHash.Hex(),
-		LogIndex:    ev.Raw.Index,
-		BlockNumber: ev.Raw.BlockNumber,
-		Event:       "erc20_transfer",
-		EventArgs:   string(marshal),
-		Contract:    ev.Raw.Address.Hex(),
-	}
-	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
-	if result.Error != nil {
-		return false, result.Error
-	}
-	return result.RowsAffected > 0, nil
+	return l.recordEventMap(ev.Raw, "erc20_transfer", indexedMap)
 }
 
 func (l *listenerService) handleErc20Approval(ev *erc20.Erc20Approval) {
@@ -222,47 +236,31 @@ func (l *listenerService) handleErc20Approval(ev *erc20.Erc20Approval) {
 }
 
 func (l *listenerService) recordErc20Approval(ev *erc20.Erc20Approval) (bool, error) {
-	signature := ""
-	if len(ev.Raw.Topics) > 0 {
-		signature = ev.Raw.Topics[0].Hex()
-	}
 	indexedMap := map[string]string{
-		"signature": signature,
-		"owner":     ev.Owner.Hex(),
-		"spender":   ev.Spender.Hex(),
-		"value":     ev.Value.String(),
+		"owner":   ev.Owner.Hex(),
+		"spender": ev.Spender.Hex(),
+		"value":   ev.Value.String(),
 	}
-	marshal, err := json.Marshal(indexedMap)
-	if err != nil {
-		return false, err
-	}
-	entry := models.EventLog{
-		TxHash:      ev.Raw.TxHash.Hex(),
-		LogIndex:    ev.Raw.Index,
-		BlockNumber: ev.Raw.BlockNumber,
-		Event:       "erc20_transfer",
-		EventArgs:   string(marshal),
-		Contract:    ev.Raw.Address.Hex(),
-	}
-	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
-	if result.Error != nil {
-		return false, result.Error
-	}
-	return result.RowsAffected > 0, nil
+	return l.recordEventMap(ev.Raw, "erc20_approval", indexedMap)
 }
 
 func (l *listenerService) recordEvent(logEntry types.Log, eventName string) (bool, error) {
 	if len(logEntry.Topics) < 3 {
 		return false, nil
 	}
-	signature := logEntry.Topics[0].Hex()
-	address := common.BytesToAddress(logEntry.Topics[1].Bytes()[12:])
-	amount := new(big.Int).SetBytes(logEntry.Topics[2].Bytes())
 	indexedMap := map[string]string{
-		"signature": signature,
-		"user":      address.Hex(),
-		"amount":    amount.String(),
+		"user":   common.BytesToAddress(logEntry.Topics[1].Bytes()[12:]).Hex(),
+		"amount": new(big.Int).SetBytes(logEntry.Topics[2].Bytes()).String(),
 	}
+	return l.recordEventMap(logEntry, eventName, indexedMap)
+}
+
+func (l *listenerService) recordEventMap(logEntry types.Log, eventName string, indexedMap map[string]string) (bool, error) {
+	signature := ""
+	if len(logEntry.Topics) > 0 {
+		signature = logEntry.Topics[0].Hex()
+	}
+	indexedMap["signature"] = signature
 	marshal, err := json.Marshal(indexedMap)
 	if err != nil {
 		return false, err
@@ -280,6 +278,78 @@ func (l *listenerService) recordEvent(logEntry types.Log, eventName string) (boo
 		return false, result.Error
 	}
 	return result.RowsAffected > 0, nil
+}
+
+func (l *listenerService) consumeStakingStaked(s *staking.Staking, ctx context.Context, start uint64, end *uint64) error {
+	iter, err := s.FilterStaked(&bind.FilterOpts{Start: start, End: end, Context: ctx}, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+	for iter.Next() {
+		l.handleStaked(iter.Event)
+	}
+	return nil
+}
+
+func (l *listenerService) consumeStakingWithdrawn(s *staking.Staking, ctx context.Context, start uint64, end *uint64) error {
+	iter, err := s.FilterWithdrawn(&bind.FilterOpts{Start: start, End: end, Context: ctx}, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+	for iter.Next() {
+		l.handleWithdrawn(iter.Event)
+	}
+	return nil
+}
+
+func (l *listenerService) consumeStakingRewardsClaimed(s *staking.Staking, ctx context.Context, start uint64, end *uint64) error {
+	iter, err := s.FilterRewardsClaimed(&bind.FilterOpts{Start: start, End: end, Context: ctx}, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+	for iter.Next() {
+		l.handleRewardsClaimed(iter.Event)
+	}
+	return nil
+}
+
+func (l *listenerService) consumeStakingRewardRateUpdated(s *staking.Staking, ctx context.Context, start uint64, end *uint64) error {
+	iter, err := s.FilterRewardRateUpdated(&bind.FilterOpts{Start: start, End: end, Context: ctx})
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+	for iter.Next() {
+		l.handleRewardRateUpdated(iter.Event)
+	}
+	return nil
+}
+
+func (l *listenerService) consumeErc20Transfer(token *erc20.Erc20, ctx context.Context, start uint64, end *uint64) error {
+	iter, err := token.FilterTransfer(&bind.FilterOpts{Start: start, End: end, Context: ctx}, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+	for iter.Next() {
+		l.handleErc20Transfer(iter.Event)
+	}
+	return nil
+}
+
+func (l *listenerService) consumeErc20Approval(token *erc20.Erc20, ctx context.Context, start uint64, end *uint64) error {
+	iter, err := token.FilterApproval(&bind.FilterOpts{Start: start, End: end, Context: ctx}, nil, nil)
+	if err != nil {
+		return err
+	}
+	defer iter.Close()
+	for iter.Next() {
+		l.handleErc20Approval(iter.Event)
+	}
+	return nil
 }
 
 func (l *listenerService) setSyncBlock(key string, block uint64) error {
