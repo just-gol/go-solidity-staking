@@ -14,6 +14,9 @@ import (
 
 type StakingService interface {
 	Stake(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount *big.Int) (*types.Transaction, error)
+	WithdrawStakedTokens(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount *big.Int) (*types.Transaction, error)
+	GetReward(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey) (*types.Transaction, error)
+	UpdateRewardRate(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, newRewardRate *big.Int) (*types.Transaction, error)
 }
 
 type stakingService struct {
@@ -41,4 +44,61 @@ func (s *stakingService) Stake(ctx context.Context, contractAddress common.Addre
 		return nil, err
 	}
 	return newStaking.Stake(auth, amount)
+}
+func (s *stakingService) WithdrawStakedTokens(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount *big.Int) (*types.Transaction, error) {
+	client := s.client
+	newStaking, err := staking.NewStaking(contractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(
+		privateKey,
+		chainID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newStaking.WithdrawStakedTokens(auth, amount)
+}
+func (s *stakingService) GetReward(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey) (*types.Transaction, error) {
+	client := s.client
+	newStaking, err := staking.NewStaking(contractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(
+		privateKey,
+		chainID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newStaking.GetReward(auth)
+}
+func (s *stakingService) UpdateRewardRate(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, newRewardRate *big.Int) (*types.Transaction, error) {
+	client := s.client
+	newStaking, err := staking.NewStaking(contractAddress, client)
+	if err != nil {
+		return nil, err
+	}
+	chainID, err := client.ChainID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	auth, err := bind.NewKeyedTransactorWithChainID(
+		privateKey,
+		chainID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return newStaking.UpdateRewardRate(auth, newRewardRate)
 }

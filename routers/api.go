@@ -10,6 +10,9 @@ func ApiRoutersInit(r *gin.Engine, handle *handle.StakingHandle, tokenHandle *ha
 	group := r.Group("/api")
 	{
 		group.POST("/stake", handle.Stake)
+		group.POST("/withdrawStakedTokens", handle.WithdrawStakedTokens)
+		group.GET("/getReward", handle.GetReward)
+		group.POST("/updateRewardRate", handle.UpdateRewardRate)
 		group.POST("/approve", tokenHandle.Approve)
 		group.POST("/transfer", tokenHandle.Transfer)
 		group.GET("/balanceOf", tokenHandle.BalanceOf)
