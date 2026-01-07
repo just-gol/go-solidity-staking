@@ -101,6 +101,90 @@ func (s *StakingHandle) UpdateRewardRate(ctx *gin.Context) {
 	models.Success(ctx, updateRewardRate.Hash().Hex())
 }
 
+func (s *StakingHandle) Earned(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	account := common.HexToAddress(ctx.Query("account"))
+	earned, err := s.svc.Earned(ctx.Request.Context(), contractAddress, account)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, earned)
+}
+
+func (s *StakingHandle) StakedBalance(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	account := common.HexToAddress(ctx.Query("account"))
+	balance, err := s.svc.StakedBalance(ctx.Request.Context(), contractAddress, account)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, balance)
+}
+
+func (s *StakingHandle) RewardPerToken(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	value, err := s.svc.RewardPerToken(ctx.Request.Context(), contractAddress)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, value)
+}
+
+func (s *StakingHandle) RewardPerTokenStored(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	value, err := s.svc.RewardPerTokenStored(ctx.Request.Context(), contractAddress)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, value)
+}
+
+func (s *StakingHandle) RewardRate(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	value, err := s.svc.RewardRate(ctx.Request.Context(), contractAddress)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, value)
+}
+
+func (s *StakingHandle) LastUpdateTime(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	value, err := s.svc.LastUpdateTime(ctx.Request.Context(), contractAddress)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, value)
+}
+
+func (s *StakingHandle) UserRewardPerTokenPaid(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	account := common.HexToAddress(ctx.Query("account"))
+	value, err := s.svc.UserRewardPerTokenPaid(ctx.Request.Context(), contractAddress, account)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, value)
+}
+
+func (s *StakingHandle) Rewards(ctx *gin.Context) {
+	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	account := common.HexToAddress(ctx.Query("account"))
+	value, err := s.svc.Rewards(ctx.Request.Context(), contractAddress, account)
+	if err != nil {
+		models.Error(ctx, err.Error())
+		return
+	}
+	models.Success(ctx, value)
+}
+
 func parsePrivateKey(hexKey string) (*ecdsa.PrivateKey, error) {
 	if len(hexKey) >= 2 && hexKey[:2] == "0x" {
 		hexKey = hexKey[2:]
