@@ -85,15 +85,19 @@ func (l *listenerService) replayRange(ctx context.Context, contractAddress commo
 	}
 	endCopy := end
 	if err := l.consumeStakingStaked(s, ctx, start, &endCopy); err != nil {
+		logger.WithModule("listener").WithError(err).Error("replay range consume staking staked failed")
 		return err
 	}
 	if err := l.consumeStakingWithdrawn(s, ctx, start, &endCopy); err != nil {
+		logger.WithModule("listener").WithError(err).Error("replay range consume staking withdrawn failed")
 		return err
 	}
 	if err := l.consumeStakingRewardsClaimed(s, ctx, start, &endCopy); err != nil {
+		logger.WithModule("listener").WithError(err).Error("replay range consume staking reward claimed failed")
 		return err
 	}
 	if err := l.consumeStakingRewardRateUpdated(s, ctx, start, &endCopy); err != nil {
+		logger.WithModule("listener").WithError(err).Error("replay range consume staking reward rate updated failed")
 		return err
 	}
 	return l.setSyncBlock(syncKey("staking", contractAddress), end)
@@ -196,9 +200,11 @@ func (l *listenerService) replayERC20Range(ctx context.Context, contractAddress 
 	}
 	endCopy := end
 	if err := l.consumeErc20Transfer(token, ctx, start, &endCopy); err != nil {
+		logger.WithModule("listener").WithError(err).Error("replay erc20 transfer failed")
 		return err
 	}
 	if err := l.consumeErc20Approval(token, ctx, start, &endCopy); err != nil {
+		logger.WithModule("listener").WithError(err).Error("replay erc20 approve failed")
 		return err
 	}
 	return l.setSyncBlock(syncKey("erc20_transfer", contractAddress), end)
