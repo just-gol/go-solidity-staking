@@ -6,8 +6,8 @@ import (
 	"errors"
 	"go-solidity-staking/gen/erc20"
 	"go-solidity-staking/gen/staking"
+	"go-solidity-staking/logger"
 	"go-solidity-staking/models"
-	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -72,7 +72,7 @@ func (l *listenerService) StartReplayLoop(ctx context.Context, contractAddress c
 			return
 		case <-ticker.C:
 			if err := l.ReplayFromLast(ctx, contractAddress, starkBlock, confirmations); err != nil {
-				log.Printf("start replay loop:%v", err)
+				logger.WithModule("listener").WithError(err).Error("start replay loop failed")
 			}
 		}
 	}
@@ -183,7 +183,7 @@ func (l *listenerService) StartERC20ReplayLoop(ctx context.Context, contractAddr
 			return
 		case <-ticker.C:
 			if err := l.ReplayERC20FromLast(ctx, contractAddress, starkBlock, confirmations); err != nil {
-				log.Printf("start erc20 transfer replay loop:%v", err)
+				logger.WithModule("listener").WithError(err).Error("start erc20 replay loop failed")
 			}
 		}
 	}

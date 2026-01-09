@@ -2,6 +2,7 @@ package handle
 
 import (
 	"crypto/ecdsa"
+	"go-solidity-staking/logger"
 	"go-solidity-staking/models"
 	"go-solidity-staking/service"
 	"math/big"
@@ -10,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type StakingHandle struct {
@@ -29,6 +31,7 @@ func (s *StakingHandle) Stake(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.PostForm("contractAddress"))
 	parseInt, err := strconv.ParseInt(ctx.PostForm("amount"), 10, 64)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("stake parse amount failed")
 		models.Error(ctx, "Error parsing amount")
 		return
 	}
@@ -36,8 +39,14 @@ func (s *StakingHandle) Stake(ctx *gin.Context) {
 		big.NewInt(parseInt),
 		big.NewInt(1e18),
 	)
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "stake",
+		"contract": contractAddress.Hex(),
+		"amount":   amount.String(),
+	}).Info("stake request")
 	stake, err := s.svc.Stake(ctx.Request.Context(), contractAddress, privateKey, amount)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("stake failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -52,6 +61,7 @@ func (s *StakingHandle) WithdrawStakedTokens(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.PostForm("contractAddress"))
 	parseInt, err := strconv.ParseInt(ctx.PostForm("amount"), 10, 64)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("withdraw parse amount failed")
 		models.Error(ctx, "Error parsing amount")
 		return
 	}
@@ -59,8 +69,14 @@ func (s *StakingHandle) WithdrawStakedTokens(ctx *gin.Context) {
 		big.NewInt(parseInt),
 		big.NewInt(1e18),
 	)
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "withdraw",
+		"contract": contractAddress.Hex(),
+		"amount":   amount.String(),
+	}).Info("withdraw request")
 	withdraw, err := s.svc.WithdrawStakedTokens(ctx.Request.Context(), contractAddress, privateKey, amount)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("withdraw failed")
 		models.Error(ctx, err.Error())
 		return
 	}

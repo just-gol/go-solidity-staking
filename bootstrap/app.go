@@ -3,9 +3,9 @@ package bootstrap
 import (
 	"context"
 	"go-solidity-staking/handle"
+	"go-solidity-staking/logger"
 	"go-solidity-staking/routers"
 	"go-solidity-staking/service"
-	"log"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -16,12 +16,15 @@ import (
 )
 
 func NewApp() (*gin.Engine, error) {
+	logger.Init()
 	config, err := ini.Load("./config/staking.ini")
 	if err != nil {
+		logger.WithModule("bootstrap").WithError(err).Error("load config failed")
 		return nil, err
 	}
 	wsClient, err := ethclient.Dial(config.Section("url").Key("ws_url").String())
 	if err != nil {
+		logger.WithModule("bootstrap").WithError(err).Error("dial ws failed")
 		return nil, err
 	}
 	listenerService := service.NewListenerService(wsClient)
@@ -32,6 +35,7 @@ func NewApp() (*gin.Engine, error) {
 	rewardTokenAddress := common.HexToAddress(rewardTokenAddressStr)
 	rpcClient, err := ethclient.Dial(config.Section("url").Key("rpc_url").String())
 	if err != nil {
+		logger.WithModule("bootstrap").WithError(err).Error("dial rpc failed")
 		return nil, err
 	}
 	// 质押
@@ -50,7 +54,7 @@ func NewApp() (*gin.Engine, error) {
 			config.Section("eth").Key("start_block").MustUint64(0),
 			config.Section("eth").Key("confirmations").MustUint64(1),
 		); err != nil {
-			log.Printf("Error replaying from last: %v", err)
+			logger.WithModule("listener").WithError(err).Error("replay from last failed")
 			return
 		}
 		listenerService.StartReplayLoop(
@@ -78,7 +82,7 @@ func funcERC20(addressStr string, tokenAddress common.Address, listenerService s
 				config.Section("eth").Key("start_block").MustUint64(0),
 				config.Section("eth").Key("confirmations").MustUint64(1),
 			); err != nil {
-				log.Printf("Error replaying erc20 from last: %v", err)
+				logger.WithModule("listener").WithError(err).Error("replay erc20 from last failed")
 				return
 			}
 			listenerService.StartERC20ReplayLoop(

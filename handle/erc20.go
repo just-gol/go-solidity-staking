@@ -1,6 +1,7 @@
 package handle
 
 import (
+	"go-solidity-staking/logger"
 	"go-solidity-staking/models"
 	"go-solidity-staking/service"
 	"math/big"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type ERC20TokenHandle struct {
@@ -28,6 +30,7 @@ func (e *ERC20TokenHandle) Approve(ctx *gin.Context) {
 	spenderAddress := common.HexToAddress(ctx.PostForm("spenderAddress"))
 	parseInt, err := strconv.ParseInt(ctx.PostForm("value"), 10, 64)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("approve parse amount failed")
 		models.Error(ctx, "Error parsing amount")
 		return
 	}
@@ -35,8 +38,15 @@ func (e *ERC20TokenHandle) Approve(ctx *gin.Context) {
 		big.NewInt(parseInt),
 		big.NewInt(1e18),
 	)
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "approve",
+		"contract": contractAddress.Hex(),
+		"spender":  spenderAddress.Hex(),
+		"value":    value.String(),
+	}).Info("approve request")
 	approve, err := e.svc.Approve(ctx.Request.Context(), contractAddress, spenderAddress, privateKey, value)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("approve failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -59,6 +69,7 @@ func (e *ERC20TokenHandle) Transfer(ctx *gin.Context) {
 	to := common.HexToAddress(ctx.PostForm("to"))
 	parseInt, err := strconv.ParseInt(ctx.PostForm("value"), 10, 64)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("transfer parse amount failed")
 		models.Error(ctx, "Error parsing amount")
 		return
 	}
@@ -66,8 +77,15 @@ func (e *ERC20TokenHandle) Transfer(ctx *gin.Context) {
 		big.NewInt(parseInt),
 		big.NewInt(1e18),
 	)
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "transfer",
+		"contract": contractAddress.Hex(),
+		"to":       to.Hex(),
+		"value":    value.String(),
+	}).Info("transfer request")
 	approve, err := e.svc.Transfer(ctx.Request.Context(), contractAddress, to, privateKey, value)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("transfer failed")
 		models.Error(ctx, err.Error())
 		return
 	}

@@ -6,6 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.16.7
 	github.com/gin-contrib/cors v1.7.6
 	github.com/gin-gonic/gin v1.11.0
+	github.com/sirupsen/logrus v1.9.3
 	gopkg.in/ini.v1 v1.67.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.1
