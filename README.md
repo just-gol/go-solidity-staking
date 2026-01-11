@@ -79,3 +79,13 @@ Base: `http://localhost:8080/api`
   - query: `contractAddress`, `to`
 - `GET /allowance`
   - query: `contractAddress`, `ownerAddress`, `spenderAddress`
+
+## 已做优化
+- listener 回放循环改为 ticker，避免只执行一次
+- 确认区块回放逻辑修正：按 `confirmations` 回退最新区块
+- staking 与 ERC20 事件回放补齐并统一抽象（减少重复代码）
+- 事件入库结构统一（包含 signature 字段）
+- ERC20 Approve/Transfer/Allowance 逻辑修正
+- 新增 staking 只读查询接口（earned、rewardRate 等）
+- 引入 logrus 结构化日志
+- service 层错误包装，日志可追踪上下文
