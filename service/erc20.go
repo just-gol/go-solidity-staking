@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"go-solidity-staking/gen/erc20"
 	"math/big"
 
@@ -31,48 +32,64 @@ func (e *erc20TokenService) Approve(ctx context.Context, contractAddress common.
 	client := e.client
 	newErc20, err := erc20.NewErc20(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new erc20 contract: %w", err)
 	}
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chain id: %w", err)
 	}
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create transactor: %w", err)
 	}
-	return newErc20.Approve(auth, spenderAddress, value)
+	tx, err := newErc20.Approve(auth, spenderAddress, value)
+	if err != nil {
+		return nil, fmt.Errorf("approve tx: %w", err)
+	}
+	return tx, nil
 }
 func (e *erc20TokenService) Transfer(ctx context.Context, contractAddress common.Address, to common.Address, privateKey *ecdsa.PrivateKey, value *big.Int) (*types.Transaction, error) {
 	client := e.client
 	newErc20, err := erc20.NewErc20(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new erc20 contract: %w", err)
 	}
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chain id: %w", err)
 	}
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create transactor: %w", err)
 	}
-	return newErc20.Transfer(auth, to, value)
+	tx, err := newErc20.Transfer(auth, to, value)
+	if err != nil {
+		return nil, fmt.Errorf("transfer tx: %w", err)
+	}
+	return tx, nil
 }
 func (e *erc20TokenService) BalanceOf(ctx context.Context, contractAddress common.Address, to common.Address) (*big.Int, error) {
 	client := e.client
 	newErc20, err := erc20.NewErc20(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new erc20 contract: %w", err)
 	}
-	return newErc20.BalanceOf(&bind.CallOpts{Context: ctx}, to)
+	value, err := newErc20.BalanceOf(&bind.CallOpts{Context: ctx}, to)
+	if err != nil {
+		return nil, fmt.Errorf("balanceOf call: %w", err)
+	}
+	return value, nil
 }
 
 func (e *erc20TokenService) Allowance(ctx context.Context, contractAddress common.Address, ownerAddress common.Address, spenderAddress common.Address) (*big.Int, error) {
 	client := e.client
 	newErc20, err := erc20.NewErc20(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new erc20 contract: %w", err)
 	}
-	return newErc20.Allowance(&bind.CallOpts{Context: ctx}, ownerAddress, spenderAddress)
+	value, err := newErc20.Allowance(&bind.CallOpts{Context: ctx}, ownerAddress, spenderAddress)
+	if err != nil {
+		return nil, fmt.Errorf("allowance call: %w", err)
+	}
+	return value, nil
 }

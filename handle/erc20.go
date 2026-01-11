@@ -102,6 +102,7 @@ func (e *ERC20TokenHandle) BalanceOf(ctx *gin.Context) {
 	}).Info("balanceOf request")
 	balanceOf, err := e.svc.BalanceOf(ctx.Request.Context(), contractAddress, to)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("balanceOf failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -120,6 +121,7 @@ func (e *ERC20TokenHandle) Allowance(ctx *gin.Context) {
 	}).Info("allowance request")
 	allowance, err := e.svc.Allowance(ctx.Request.Context(), contractAddress, ownerAddress, spenderAddress)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("allowance failed")
 		models.Error(ctx, err.Error())
 		return
 	}

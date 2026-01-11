@@ -96,6 +96,7 @@ func (s *StakingHandle) GetReward(ctx *gin.Context) {
 	}).Info("reward request")
 	getReward, err := s.svc.GetReward(ctx.Request.Context(), contractAddress, privateKey)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("get reward failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -119,6 +120,7 @@ func (s *StakingHandle) UpdateRewardRate(ctx *gin.Context) {
 	}).Info("update reward rate request")
 	updateRewardRate, err := s.svc.UpdateRewardRate(ctx.Request.Context(), contractAddress, privateKey, new(big.Int).SetInt64(parseInt))
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("update reward rate failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -135,6 +137,7 @@ func (s *StakingHandle) Earned(ctx *gin.Context) {
 	}).Info("earned request")
 	earned, err := s.svc.Earned(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("earned failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -151,6 +154,7 @@ func (s *StakingHandle) StakedBalance(ctx *gin.Context) {
 	}).Info("staked balance request")
 	balance, err := s.svc.StakedBalance(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("staked balance failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -165,6 +169,7 @@ func (s *StakingHandle) RewardPerToken(ctx *gin.Context) {
 	}).Info("reward per token request")
 	value, err := s.svc.RewardPerToken(ctx.Request.Context(), contractAddress)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("reward per token failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -179,6 +184,7 @@ func (s *StakingHandle) RewardPerTokenStored(ctx *gin.Context) {
 	}).Info("reward per token stored request")
 	value, err := s.svc.RewardPerTokenStored(ctx.Request.Context(), contractAddress)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("reward_per_token_stored call failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -193,6 +199,7 @@ func (s *StakingHandle) RewardRate(ctx *gin.Context) {
 	}).Info("reward rate request")
 	value, err := s.svc.RewardRate(ctx.Request.Context(), contractAddress)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("reward rate failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -207,6 +214,7 @@ func (s *StakingHandle) LastUpdateTime(ctx *gin.Context) {
 	}).Info("last update time request")
 	value, err := s.svc.LastUpdateTime(ctx.Request.Context(), contractAddress)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("last update time failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -223,6 +231,7 @@ func (s *StakingHandle) UserRewardPerTokenPaid(ctx *gin.Context) {
 	}).Info("user reward per token paid request")
 	value, err := s.svc.UserRewardPerTokenPaid(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("user reward per token paid failed")
 		models.Error(ctx, err.Error())
 		return
 	}
@@ -239,6 +248,7 @@ func (s *StakingHandle) Rewards(ctx *gin.Context) {
 	}).Info("rewards request")
 	value, err := s.svc.Rewards(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
+		logger.WithModule("api").WithError(err).Error("rewards failed")
 		models.Error(ctx, err.Error())
 		return
 	}

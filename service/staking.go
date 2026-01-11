@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"go-solidity-staking/gen/staking"
 	"math/big"
 
@@ -38,139 +39,187 @@ func (s *stakingService) Stake(ctx context.Context, contractAddress common.Addre
 	client := s.client
 	newStaking, err := staking.NewStaking(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chain id: %w", err)
 	}
 	auth, err := bind.NewKeyedTransactorWithChainID(
 		privateKey,
 		chainID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create transactor: %w", err)
 	}
-	return newStaking.Stake(auth, amount)
+	tx, err := newStaking.Stake(auth, amount)
+	if err != nil {
+		return nil, fmt.Errorf("stake tx: %w", err)
+	}
+	return tx, nil
 }
 func (s *stakingService) WithdrawStakedTokens(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, amount *big.Int) (*types.Transaction, error) {
 	client := s.client
 	newStaking, err := staking.NewStaking(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chain id: %w", err)
 	}
 	auth, err := bind.NewKeyedTransactorWithChainID(
 		privateKey,
 		chainID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create transactor: %w", err)
 	}
-	return newStaking.WithdrawStakedTokens(auth, amount)
+	tx, err := newStaking.WithdrawStakedTokens(auth, amount)
+	if err != nil {
+		return nil, fmt.Errorf("withdraw tx: %w", err)
+	}
+	return tx, nil
 }
 func (s *stakingService) GetReward(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey) (*types.Transaction, error) {
 	client := s.client
 	newStaking, err := staking.NewStaking(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chain id: %w", err)
 	}
 	auth, err := bind.NewKeyedTransactorWithChainID(
 		privateKey,
 		chainID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create transactor: %w", err)
 	}
-	return newStaking.GetReward(auth)
+	tx, err := newStaking.GetReward(auth)
+	if err != nil {
+		return nil, fmt.Errorf("getReward tx: %w", err)
+	}
+	return tx, nil
 }
 func (s *stakingService) UpdateRewardRate(ctx context.Context, contractAddress common.Address, privateKey *ecdsa.PrivateKey, newRewardRate *big.Int) (*types.Transaction, error) {
 	client := s.client
 	newStaking, err := staking.NewStaking(contractAddress, client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
 	chainID, err := client.ChainID(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get chain id: %w", err)
 	}
 	auth, err := bind.NewKeyedTransactorWithChainID(
 		privateKey,
 		chainID,
 	)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create transactor: %w", err)
 	}
-	return newStaking.UpdateRewardRate(auth, newRewardRate)
+	tx, err := newStaking.UpdateRewardRate(auth, newRewardRate)
+	if err != nil {
+		return nil, fmt.Errorf("updateRewardRate tx: %w", err)
+	}
+	return tx, nil
 }
 
 func (s *stakingService) Earned(ctx context.Context, contractAddress common.Address, account common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.Earned(&bind.CallOpts{Context: ctx}, account)
+	value, err := newStaking.Earned(&bind.CallOpts{Context: ctx}, account)
+	if err != nil {
+		return nil, fmt.Errorf("earned call: %w", err)
+	}
+	return value, nil
 }
 
 func (s *stakingService) StakedBalance(ctx context.Context, contractAddress common.Address, account common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.StakedBalance(&bind.CallOpts{Context: ctx}, account)
+	value, err := newStaking.StakedBalance(&bind.CallOpts{Context: ctx}, account)
+	if err != nil {
+		return nil, fmt.Errorf("stakedBalance call: %w", err)
+	}
+	return value, nil
 }
 
 func (s *stakingService) RewardPerToken(ctx context.Context, contractAddress common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.RewardPerToken(&bind.CallOpts{Context: ctx})
+	value, err := newStaking.RewardPerToken(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return nil, fmt.Errorf("rewardPerToken call: %w", err)
+	}
+	return value, nil
 }
 
 func (s *stakingService) RewardPerTokenStored(ctx context.Context, contractAddress common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.RewardPerTokenStored(&bind.CallOpts{Context: ctx})
+	value, err := newStaking.RewardPerTokenStored(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return nil, fmt.Errorf("rewardPerTokenStored call: %w", err)
+	}
+	return value, nil
 }
 
 func (s *stakingService) RewardRate(ctx context.Context, contractAddress common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.RewardRate(&bind.CallOpts{Context: ctx})
+	value, err := newStaking.RewardRate(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return nil, fmt.Errorf("rewardRate call: %w", err)
+	}
+	return value, nil
 }
 
 func (s *stakingService) LastUpdateTime(ctx context.Context, contractAddress common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.LastUpdateTime(&bind.CallOpts{Context: ctx})
+	value, err := newStaking.LastUpdateTime(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return nil, fmt.Errorf("lastUpdateTime call: %w", err)
+	}
+	return value, nil
 }
 
 func (s *stakingService) UserRewardPerTokenPaid(ctx context.Context, contractAddress common.Address, account common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.UserRewardPerTokenPaid(&bind.CallOpts{Context: ctx}, account)
+	value, err := newStaking.UserRewardPerTokenPaid(&bind.CallOpts{Context: ctx}, account)
+	if err != nil {
+		return nil, fmt.Errorf("userRewardPerTokenPaid call: %w", err)
+	}
+	return value, nil
 }
 
 func (s *stakingService) Rewards(ctx context.Context, contractAddress common.Address, account common.Address) (*big.Int, error) {
 	newStaking, err := staking.NewStaking(contractAddress, s.client)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("new staking contract: %w", err)
 	}
-	return newStaking.Rewards(&bind.CallOpts{Context: ctx}, account)
+	value, err := newStaking.Rewards(&bind.CallOpts{Context: ctx}, account)
+	if err != nil {
+		return nil, fmt.Errorf("rewards call: %w", err)
+	}
+	return value, nil
 }
