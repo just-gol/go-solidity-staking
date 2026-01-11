@@ -90,6 +90,10 @@ func (s *StakingHandle) GetReward(ctx *gin.Context) {
 		return
 	}
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "reward",
+		"contract": contractAddress.Hex(),
+	}).Info("reward request")
 	getReward, err := s.svc.GetReward(ctx.Request.Context(), contractAddress, privateKey)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -109,6 +113,10 @@ func (s *StakingHandle) UpdateRewardRate(ctx *gin.Context) {
 		models.Error(ctx, "Error parsing amount")
 		return
 	}
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "update reward rate",
+		"contract": contractAddress.Hex(),
+	}).Info("update reward rate request")
 	updateRewardRate, err := s.svc.UpdateRewardRate(ctx.Request.Context(), contractAddress, privateKey, new(big.Int).SetInt64(parseInt))
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -120,6 +128,11 @@ func (s *StakingHandle) UpdateRewardRate(ctx *gin.Context) {
 func (s *StakingHandle) Earned(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
 	account := common.HexToAddress(ctx.Query("account"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "earned",
+		"contract": contractAddress.Hex(),
+		"account":  account.Hex(),
+	}).Info("earned request")
 	earned, err := s.svc.Earned(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -131,6 +144,11 @@ func (s *StakingHandle) Earned(ctx *gin.Context) {
 func (s *StakingHandle) StakedBalance(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
 	account := common.HexToAddress(ctx.Query("account"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "staked_balance",
+		"contract": contractAddress.Hex(),
+		"account":  account.Hex(),
+	}).Info("staked balance request")
 	balance, err := s.svc.StakedBalance(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -141,6 +159,10 @@ func (s *StakingHandle) StakedBalance(ctx *gin.Context) {
 
 func (s *StakingHandle) RewardPerToken(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "reward_per_token",
+		"contract": contractAddress.Hex(),
+	}).Info("reward per token request")
 	value, err := s.svc.RewardPerToken(ctx.Request.Context(), contractAddress)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -151,6 +173,10 @@ func (s *StakingHandle) RewardPerToken(ctx *gin.Context) {
 
 func (s *StakingHandle) RewardPerTokenStored(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "reward_per_token_stored",
+		"contract": contractAddress.Hex(),
+	}).Info("reward per token stored request")
 	value, err := s.svc.RewardPerTokenStored(ctx.Request.Context(), contractAddress)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -161,6 +187,10 @@ func (s *StakingHandle) RewardPerTokenStored(ctx *gin.Context) {
 
 func (s *StakingHandle) RewardRate(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "reward_rate",
+		"contract": contractAddress.Hex(),
+	}).Info("reward rate request")
 	value, err := s.svc.RewardRate(ctx.Request.Context(), contractAddress)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -171,6 +201,10 @@ func (s *StakingHandle) RewardRate(ctx *gin.Context) {
 
 func (s *StakingHandle) LastUpdateTime(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "last_update_time",
+		"contract": contractAddress.Hex(),
+	}).Info("last update time request")
 	value, err := s.svc.LastUpdateTime(ctx.Request.Context(), contractAddress)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -182,6 +216,11 @@ func (s *StakingHandle) LastUpdateTime(ctx *gin.Context) {
 func (s *StakingHandle) UserRewardPerTokenPaid(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
 	account := common.HexToAddress(ctx.Query("account"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "user_reward_per_token_paid",
+		"contract": contractAddress.Hex(),
+		"account":  account.Hex(),
+	}).Info("user reward per token paid request")
 	value, err := s.svc.UserRewardPerTokenPaid(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -193,6 +232,11 @@ func (s *StakingHandle) UserRewardPerTokenPaid(ctx *gin.Context) {
 func (s *StakingHandle) Rewards(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
 	account := common.HexToAddress(ctx.Query("account"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "rewards",
+		"contract": contractAddress.Hex(),
+		"account":  account.Hex(),
+	}).Info("rewards request")
 	value, err := s.svc.Rewards(ctx.Request.Context(), contractAddress, account)
 	if err != nil {
 		models.Error(ctx, err.Error())

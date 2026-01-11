@@ -95,6 +95,11 @@ func (e *ERC20TokenHandle) Transfer(ctx *gin.Context) {
 func (e *ERC20TokenHandle) BalanceOf(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
 	to := common.HexToAddress(ctx.Query("to"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "balanceOf",
+		"contract": contractAddress.Hex(),
+		"to":       to.Hex(),
+	}).Info("balanceOf request")
 	balanceOf, err := e.svc.BalanceOf(ctx.Request.Context(), contractAddress, to)
 	if err != nil {
 		models.Error(ctx, err.Error())
@@ -107,6 +112,12 @@ func (e *ERC20TokenHandle) Allowance(ctx *gin.Context) {
 	contractAddress := common.HexToAddress(ctx.Query("contractAddress"))
 	ownerAddress := common.HexToAddress(ctx.Query("ownerAddress"))
 	spenderAddress := common.HexToAddress(ctx.Query("spenderAddress"))
+	logger.WithModule("api").WithFields(logrus.Fields{
+		"action":   "allowance",
+		"contract": contractAddress.Hex(),
+		"spender":  spenderAddress.Hex(),
+		"owner":    ownerAddress.Hex(),
+	}).Info("allowance request")
 	allowance, err := e.svc.Allowance(ctx.Request.Context(), contractAddress, ownerAddress, spenderAddress)
 	if err != nil {
 		models.Error(ctx, err.Error())
