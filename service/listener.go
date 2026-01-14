@@ -19,6 +19,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	StakingPrefix = "staking"
+	ERC20Prefix   = "erc20_transfer"
+)
+
 type ListenerService interface {
 	ReplayFromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error
 	StartReplayLoop(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64, interval time.Duration)
@@ -36,7 +41,7 @@ func NewListenerService(client *ethclient.Client) ListenerService {
 
 func (l *listenerService) ReplayFromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error {
 	// 读取上次同步的区块
-	key := syncKey("staking", contractAddress)
+	key := syncKey(StakingPrefix, contractAddress)
 	lastBlock, err := l.getSyncBlock(key)
 	if err != nil {
 		return err
@@ -100,7 +105,7 @@ func (l *listenerService) replayRange(ctx context.Context, contractAddress commo
 		logger.WithModule("listener").WithError(err).Error("replay range consume staking reward rate updated failed")
 		return err
 	}
-	return l.setSyncBlock(syncKey("staking", contractAddress), end)
+	return l.setSyncBlock(syncKey(StakingPrefix, contractAddress), end)
 }
 func (l *listenerService) handleStaked(ev *staking.StakingStaked) {
 	if ev == nil {
@@ -112,7 +117,7 @@ func (l *listenerService) handleStaked(ev *staking.StakingStaked) {
 	}
 	_, _ = l.recordStakedDetail(ev)
 	// 更新区块高度
-	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
+	_ = l.setSyncBlock(syncKey(StakingPrefix, ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
 func (l *listenerService) handleWithdrawn(ev *staking.StakingWithdrawn) {
@@ -124,7 +129,7 @@ func (l *listenerService) handleWithdrawn(ev *staking.StakingWithdrawn) {
 		return
 	}
 	_, _ = l.recordWithdrawnDetail(ev)
-	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
+	_ = l.setSyncBlock(syncKey(StakingPrefix, ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
 func (l *listenerService) handleRewardsClaimed(ev *staking.StakingRewardsClaimed) {
@@ -136,7 +141,7 @@ func (l *listenerService) handleRewardsClaimed(ev *staking.StakingRewardsClaimed
 		return
 	}
 	_, _ = l.recordRewardsClaimedDetail(ev)
-	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
+	_ = l.setSyncBlock(syncKey(StakingPrefix, ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
 func (l *listenerService) handleRewardRateUpdated(ev *staking.StakingRewardRateUpdated) {
@@ -156,11 +161,11 @@ func (l *listenerService) handleRewardRateUpdated(ev *staking.StakingRewardRateU
 		return
 	}
 	_, _ = l.recordRewardRateUpdatedDetail(ev)
-	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
+	_ = l.setSyncBlock(syncKey(StakingPrefix, ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
 func (l *listenerService) ReplayERC20FromLast(ctx context.Context, contractAddress common.Address, starkBlock uint64, confirmations uint64) error {
-	key := syncKey("erc20_transfer", contractAddress)
+	key := syncKey(ERC20Prefix, contractAddress)
 	lastBlock, err := l.getSyncBlock(key)
 	if err != nil {
 		return err
@@ -211,7 +216,7 @@ func (l *listenerService) replayERC20Range(ctx context.Context, contractAddress 
 		logger.WithModule("listener").WithError(err).Error("replay erc20 approve failed")
 		return err
 	}
-	return l.setSyncBlock(syncKey("erc20_transfer", contractAddress), end)
+	return l.setSyncBlock(syncKey(ERC20Prefix, contractAddress), end)
 }
 
 func (l *listenerService) handleErc20Transfer(ev *erc20.Erc20Transfer) {
@@ -223,7 +228,7 @@ func (l *listenerService) handleErc20Transfer(ev *erc20.Erc20Transfer) {
 		return
 	}
 	_, _ = l.recordErc20TransferDetail(ev)
-	_ = l.setSyncBlock(syncKey("erc20_transfer", ev.Raw.Address), ev.Raw.BlockNumber)
+	_ = l.setSyncBlock(syncKey(ERC20Prefix, ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
 func (l *listenerService) recordErc20Transfer(ev *erc20.Erc20Transfer) (bool, error) {
@@ -232,7 +237,7 @@ func (l *listenerService) recordErc20Transfer(ev *erc20.Erc20Transfer) (bool, er
 		"to":    ev.To.Hex(),
 		"value": ev.Value.String(),
 	}
-	return l.recordEventMap(ev.Raw, "erc20_transfer", indexedMap)
+	return l.recordEventMap(ev.Raw, ERC20Prefix, indexedMap)
 }
 
 func (l *listenerService) handleErc20Approval(ev *erc20.Erc20Approval) {
@@ -244,7 +249,7 @@ func (l *listenerService) handleErc20Approval(ev *erc20.Erc20Approval) {
 		return
 	}
 	_, _ = l.recordErc20ApprovalDetail(ev)
-	_ = l.setSyncBlock(syncKey("erc20_transfer", ev.Raw.Address), ev.Raw.BlockNumber)
+	_ = l.setSyncBlock(syncKey(ERC20Prefix, ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
 func (l *listenerService) recordErc20Approval(ev *erc20.Erc20Approval) (bool, error) {
@@ -253,7 +258,7 @@ func (l *listenerService) recordErc20Approval(ev *erc20.Erc20Approval) (bool, er
 		"spender": ev.Spender.Hex(),
 		"value":   ev.Value.String(),
 	}
-	return l.recordEventMap(ev.Raw, "erc20_approval", indexedMap)
+	return l.recordEventMap(ev.Raw, ERC20Prefix, indexedMap)
 }
 
 func (l *listenerService) recordEvent(logEntry types.Log, eventName string) (bool, error) {
