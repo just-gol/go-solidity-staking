@@ -14,6 +14,13 @@
 - `erc20.sol`
 - `ierc20.sol`
 
+## 部署流程（本地链）
+建议顺序：
+1) 部署两个 ERC20（stakingToken / rewardToken）
+2) 部署 Staking 合约，传入两个 ERC20 地址
+3) 给 staking 合约转入 rewardToken 作为奖励池
+4) 用户先 `approve`，再 `stake`
+
 ### 编译 & 生成 Go 绑定
 示例：
 ```bash
@@ -45,6 +52,16 @@ interval = 2
 ## 运行
 ```bash
 go run .
+```
+
+## 数据库
+事件会写入：
+- `event_log`（通用事件表）
+- 明细表：`staking_event_*`、`erc20_event_*`
+
+建表脚本：
+```
+scripts/create_event_detail_tables.sql
 ```
 
 ## API
