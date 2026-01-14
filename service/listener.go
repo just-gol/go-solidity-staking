@@ -110,6 +110,7 @@ func (l *listenerService) handleStaked(ev *staking.StakingStaked) {
 	if err != nil || !ok {
 		return
 	}
+	_, _ = l.recordStakedDetail(ev)
 	// 更新区块高度
 	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
 }
@@ -122,6 +123,7 @@ func (l *listenerService) handleWithdrawn(ev *staking.StakingWithdrawn) {
 	if err != nil || !ok {
 		return
 	}
+	_, _ = l.recordWithdrawnDetail(ev)
 	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
@@ -133,6 +135,7 @@ func (l *listenerService) handleRewardsClaimed(ev *staking.StakingRewardsClaimed
 	if err != nil || !ok {
 		return
 	}
+	_, _ = l.recordRewardsClaimedDetail(ev)
 	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
@@ -152,6 +155,7 @@ func (l *listenerService) handleRewardRateUpdated(ev *staking.StakingRewardRateU
 	if err != nil || !ok {
 		return
 	}
+	_, _ = l.recordRewardRateUpdatedDetail(ev)
 	_ = l.setSyncBlock(syncKey("staking", ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
@@ -218,6 +222,7 @@ func (l *listenerService) handleErc20Transfer(ev *erc20.Erc20Transfer) {
 	if err != nil || !ok {
 		return
 	}
+	_, _ = l.recordErc20TransferDetail(ev)
 	_ = l.setSyncBlock(syncKey("erc20_transfer", ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
@@ -238,6 +243,7 @@ func (l *listenerService) handleErc20Approval(ev *erc20.Erc20Approval) {
 	if err != nil || !ok {
 		return
 	}
+	_, _ = l.recordErc20ApprovalDetail(ev)
 	_ = l.setSyncBlock(syncKey("erc20_transfer", ev.Raw.Address), ev.Raw.BlockNumber)
 }
 
@@ -278,6 +284,103 @@ func (l *listenerService) recordEventMap(logEntry types.Log, eventName string, i
 		Event:       eventName,
 		EventArgs:   string(marshal),
 		Contract:    logEntry.Address.Hex(),
+	}
+	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
+func (l *listenerService) recordStakedDetail(ev *staking.StakingStaked) (bool, error) {
+	entry := models.StakingEventStaked{
+		TxHash:      ev.Raw.TxHash.Hex(),
+		LogIndex:    ev.Raw.Index,
+		BlockNumber: ev.Raw.BlockNumber,
+		Contract:    ev.Raw.Address.Hex(),
+		User:        ev.User.Hex(),
+		Amount:      ev.Amount.String(),
+	}
+	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
+func (l *listenerService) recordWithdrawnDetail(ev *staking.StakingWithdrawn) (bool, error) {
+	entry := models.StakingEventWithdrawn{
+		TxHash:      ev.Raw.TxHash.Hex(),
+		LogIndex:    ev.Raw.Index,
+		BlockNumber: ev.Raw.BlockNumber,
+		Contract:    ev.Raw.Address.Hex(),
+		User:        ev.User.Hex(),
+		Amount:      ev.Amount.String(),
+	}
+	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
+func (l *listenerService) recordRewardsClaimedDetail(ev *staking.StakingRewardsClaimed) (bool, error) {
+	entry := models.StakingEventRewardsClaimed{
+		TxHash:      ev.Raw.TxHash.Hex(),
+		LogIndex:    ev.Raw.Index,
+		BlockNumber: ev.Raw.BlockNumber,
+		Contract:    ev.Raw.Address.Hex(),
+		User:        ev.User.Hex(),
+		Amount:      ev.Amount.String(),
+	}
+	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
+func (l *listenerService) recordRewardRateUpdatedDetail(ev *staking.StakingRewardRateUpdated) (bool, error) {
+	entry := models.StakingEventRewardRateUpdated{
+		TxHash:        ev.Raw.TxHash.Hex(),
+		LogIndex:      ev.Raw.Index,
+		BlockNumber:   ev.Raw.BlockNumber,
+		Contract:      ev.Raw.Address.Hex(),
+		NewRewardRate: ev.NewRewardRate.String(),
+	}
+	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
+func (l *listenerService) recordErc20TransferDetail(ev *erc20.Erc20Transfer) (bool, error) {
+	entry := models.ERC20EventTransfer{
+		TxHash:      ev.Raw.TxHash.Hex(),
+		LogIndex:    ev.Raw.Index,
+		BlockNumber: ev.Raw.BlockNumber,
+		Contract:    ev.Raw.Address.Hex(),
+		From:        ev.From.Hex(),
+		To:          ev.To.Hex(),
+		Value:       ev.Value.String(),
+	}
+	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
+	if result.Error != nil {
+		return false, result.Error
+	}
+	return result.RowsAffected > 0, nil
+}
+
+func (l *listenerService) recordErc20ApprovalDetail(ev *erc20.Erc20Approval) (bool, error) {
+	entry := models.ERC20EventApproval{
+		TxHash:      ev.Raw.TxHash.Hex(),
+		LogIndex:    ev.Raw.Index,
+		BlockNumber: ev.Raw.BlockNumber,
+		Contract:    ev.Raw.Address.Hex(),
+		Owner:       ev.Owner.Hex(),
+		Spender:     ev.Spender.Hex(),
+		Value:       ev.Value.String(),
 	}
 	result := models.DB.Where("tx_hash=? and log_index=?", entry.TxHash, entry.LogIndex).FirstOrCreate(&entry)
 	if result.Error != nil {
